@@ -48,7 +48,7 @@ names(meteor) <- meteor_names
 ``` r
 lake_data <- dissolved_02 %>% inner_join(h20_tempf, by = "dates")
 
-lake_data <- lake_data %>% inner_join(chl_phyco, by = "dates")
+lake_data <- lake_data %>% inner_join(meteor, by = "dates")
 ```
 
 1.  Is this an observational study or an experiment?
@@ -79,7 +79,7 @@ lake_data <- lake_data %>%
                values_to = "concentration") %>% 
   pivot_longer(c(temp_2m, temp_5m, temp_11m), names_to = "temp_meters", 
                values_to = "temp_f") %>% 
-  select(dates, conc_meters, concentration, temp_meters, temp_f, chlor, phyco)
+  select(-c(conc_8m, sat_2m, sat_5m, sat_8m, sat_11m, tnode_1.7m, tnode_4m, tnode_6m, tnode_8m, tnode_10m))
 ```
 
 ``` r
@@ -89,54 +89,45 @@ ggplot(lake_data) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-    ## Warning: Removed 72327 rows containing non-finite values (`stat_bin()`).
+    ## Warning: Removed 72525 rows containing non-finite values (`stat_bin()`).
 
 ![](activity03_files/figure-gfm/explore%20variables-1.png)<!-- -->
 
 ``` r
 ggplot(lake_data) +
-  geom_point(aes(x = temp_f, y = phyco))
+  geom_point(aes(x = temp_f, y = wind_speed))
 ```
 
-    ## Warning: Removed 108468 rows containing missing values (`geom_point()`).
+    ## Warning: Removed 5982 rows containing missing values (`geom_point()`).
 
 ![](activity03_files/figure-gfm/explore%20variables-2.png)<!-- -->
 
 ``` r
-ggplot(lake_data) +
-  geom_point(aes(x = temp_f, y = chlor))
-```
-
-    ## Warning: Removed 128394 rows containing missing values (`geom_point()`).
-
-![](activity03_files/figure-gfm/explore%20variables-3.png)<!-- -->
-
-``` r
 lake_data %>% 
-  select(concentration, temp_f, phyco) %>% 
+  select(concentration, temp_f, wind_speed) %>% 
   ggpairs()
 ```
 
-    ## Warning: Removed 72327 rows containing non-finite values (`stat_density()`).
+    ## Warning: Removed 72525 rows containing non-finite values (`stat_density()`).
 
     ## Warning in ggally_statistic(data = data, mapping = mapping, na.rm = na.rm, :
-    ## Removed 73452 rows containing missing values
+    ## Removed 73757 rows containing missing values
 
     ## Warning in ggally_statistic(data = data, mapping = mapping, na.rm = na.rm, :
-    ## Removed 176532 rows containing missing values
+    ## Removed 75843 rows containing missing values
 
-    ## Warning: Removed 73452 rows containing missing values (`geom_point()`).
+    ## Warning: Removed 73757 rows containing missing values (`geom_point()`).
 
-    ## Warning: Removed 2391 rows containing non-finite values (`stat_density()`).
+    ## Warning: Removed 2661 rows containing non-finite values (`stat_density()`).
 
     ## Warning in ggally_statistic(data = data, mapping = mapping, na.rm = na.rm, :
-    ## Removed 108468 rows containing missing values
+    ## Removed 5982 rows containing missing values
 
-    ## Warning: Removed 176532 rows containing missing values (`geom_point()`).
+    ## Warning: Removed 75843 rows containing missing values (`geom_point()`).
 
-    ## Warning: Removed 108468 rows containing missing values (`geom_point()`).
+    ## Warning: Removed 5982 rows containing missing values (`geom_point()`).
 
-    ## Warning: Removed 107127 rows containing non-finite values (`stat_density()`).
+    ## Warning: Removed 3321 rows containing non-finite values (`stat_density()`).
 
 ![](activity03_files/figure-gfm/pairwise%20relationships-1.png)<!-- -->
 
@@ -171,14 +162,158 @@ lm_spec
 
 ``` r
 mlr_mod <- lm_spec %>% 
-fit(concentration ~ temp_f + phyco, data = lake_data)
+fit(concentration ~ temp_f + wind_speed, data = lake_data)
 
 tidy(mlr_mod)
 ```
 
     ## # A tibble: 3 × 5
-    ##   term           estimate   std.error statistic  p.value
-    ##   <chr>             <dbl>       <dbl>     <dbl>    <dbl>
-    ## 1 (Intercept) 16.1        0.0178          901.  0       
-    ## 2 temp_f      -0.128      0.000282       -454.  0       
-    ## 3 phyco       -0.00000989 0.000000692     -14.3 3.03e-46
+    ##   term        estimate std.error statistic p.value
+    ##   <chr>          <dbl>     <dbl>     <dbl>   <dbl>
+    ## 1 (Intercept)  15.9     0.0180       883.        0
+    ## 2 temp_f       -0.129   0.000262    -491.        0
+    ## 3 wind_speed    0.0198  0.000432      45.8       0
+
+-   Day 02
+
+\*\* Some Important Questions
+
+1.  Is at least one of the $p$ predictors $X_1$, $X_2$, $\ldots$, $X_p$
+    useful in predicting the response $Y$?
+
+2.  Do all the predictors help to explain $Y$, or is only a subset of
+    the predictors useful?
+
+3.  How well does the model fit the data?
+
+4.  Given a set of predictor values, what response value should we
+    predict and how accurate is our prediction?
+
+``` r
+# Drop conc_5m so qualitative variable conc_meters only has two levels
+lake_data2 <- lake_data %>% 
+  filter(conc_meters != 'conc_5m')
+```
+
+``` r
+# review any visual patterns
+lake_data2 %>% 
+  select(concentration, conc_meters, temp_f) %>% 
+  ggpairs()
+```
+
+    ## Warning: Removed 24477 rows containing non-finite values (`stat_density()`).
+
+    ## Warning: Removed 24477 rows containing non-finite values (`stat_boxplot()`).
+
+    ## Warning in ggally_statistic(data = data, mapping = mapping, na.rm = na.rm, :
+    ## Removed 25115 rows containing missing values
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+    ## Warning: Removed 24477 rows containing non-finite values (`stat_bin()`).
+
+    ## Warning: Removed 1774 rows containing non-finite values (`stat_boxplot()`).
+
+    ## Warning: Removed 25115 rows containing missing values (`geom_point()`).
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+    ## Warning: Removed 1774 rows containing non-finite values (`stat_bin()`).
+
+    ## Warning: Removed 1774 rows containing non-finite values (`stat_density()`).
+
+![](activity03_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+
+``` r
+#fit the mlr model
+lm_spec <- linear_reg() %>%
+set_mode("regression") %>%
+set_engine("lm")
+
+mlr_mod <- lm_spec %>% 
+fit(concentration ~ conc_meters + temp_f, data = lake_data2)
+
+tidy(mlr_mod)
+```
+
+    ## # A tibble: 3 × 5
+    ##   term               estimate std.error statistic p.value
+    ##   <chr>                 <dbl>     <dbl>     <dbl>   <dbl>
+    ## 1 (Intercept)          15.0    0.0174        864.       0
+    ## 2 conc_metersconc_2m    3.78   0.00481       787.       0
+    ## 3 temp_f               -0.148  0.000265     -556.       0
+
+1.  What is the label that R assigned to this explanatory variable term?
+
+2.  What information is represented here?
+
+3.  What information is missing here?
+
+4.  For each level of your qualitative variable, write the simplified
+    equation of the estimated line for that level. Note that if your
+    qualitative variable has two levels, you should have two simplified
+    equations.
+
+5.  Interpret the parameter estimate for the reference level of your
+    categorical variable in the context of your problem. Page 83 of the
+    text can help here (or have me come chat with you).
+
+6.  Interpret the parameter estimate for your quantitative variable in
+    the context of your problem.
+
+7.  Create a new model with the same response and quantitative
+    explanatory variable, but now choose a qualitative variable with
+    more than two (but, say, less than 5) levels and obtain the tidy
+    model output. How does R appear to handle categorical variables with
+    more than two levels?
+
+``` r
+# review any visual patterns
+lake_data %>% 
+  select(concentration, conc_meters, temp_f) %>% 
+  ggpairs()
+```
+
+    ## Warning: Removed 72525 rows containing non-finite values (`stat_density()`).
+
+    ## Warning: Removed 72525 rows containing non-finite values (`stat_boxplot()`).
+
+    ## Warning in ggally_statistic(data = data, mapping = mapping, na.rm = na.rm, :
+    ## Removed 73757 rows containing missing values
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+    ## Warning: Removed 72525 rows containing non-finite values (`stat_bin()`).
+
+    ## Warning: Removed 2661 rows containing non-finite values (`stat_boxplot()`).
+
+    ## Warning: Removed 73757 rows containing missing values (`geom_point()`).
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+    ## Warning: Removed 2661 rows containing non-finite values (`stat_bin()`).
+
+    ## Warning: Removed 2661 rows containing non-finite values (`stat_density()`).
+
+![](activity03_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+
+``` r
+#fit the mlr model
+lm_spec2 <- linear_reg() %>%
+set_mode("regression") %>%
+set_engine("lm")
+
+mlr_mod2 <- lm_spec2 %>% 
+fit(concentration ~ conc_meters + temp_f, data = lake_data)
+
+tidy(mlr_mod2)
+```
+
+    ## # A tibble: 4 × 5
+    ##   term               estimate std.error statistic p.value
+    ##   <chr>                 <dbl>     <dbl>     <dbl>   <dbl>
+    ## 1 (Intercept)          13.8    0.0129       1074.       0
+    ## 2 conc_metersconc_2m    3.78   0.00429       882.       0
+    ## 3 conc_metersconc_5m    3.16   0.00439       719.       0
+    ## 4 temp_f               -0.129  0.000195     -663.       0
